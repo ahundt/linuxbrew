@@ -1,17 +1,17 @@
 class Boost < Formula
   desc "Collection of portable C++ source libraries"
   homepage "http://www.boost.org"
-  url "https://downloads.sourceforge.net/project/boost/boost/1.58.0/boost_1_58_0.tar.bz2"
-  sha256 "fdfc204fc33ec79c99b9a74944c3e54bd78be4f7f15e260c0e2700a36dc7d3e5"
+  url "https://downloads.sourceforge.net/project/boost/boost/1.60.0/boost_1_60_0.tar.bz2"
+  sha256 "686affff989ac2488f79a97b9479efb9f2abae035b5ed4d8226de6857933fd3b"
 
   head "https://github.com/boostorg/boost.git"
 
   bottle do
     cellar :any
-    sha256 "fef665dae65c88027bdfe2c4a554a5d157aa60404acead1a7453f7ea634e804f" => :el_capitan
-    sha256 "9a3929bec0e9e9db36e005f57193433ac6b5ff9ff86b2ed3262b975d58488c19" => :yosemite
-    sha256 "c5ad1f8591ed91c551658fd198ce31cf9f6a8026fcbfd5970a39cb479e64faa2" => :mavericks
-    sha256 "7b154bf42d72bbb90c3017bb94b24fdd2e0605ceab8717283f5c9f456ac5c03d" => :mountain_lion
+    revision 1
+    sha256 "1e664fbdfe84de7bdc91154972073587856b47c12433106e9987fa3772534b3a" => :el_capitan
+    sha256 "b828f7f58d21ba4850507e4d5b7d44dae89649c3b8e0af758b746e8b3f17d8c1" => :yosemite
+    sha256 "a404a68cdd9a107b38b0467226e4077aa14d1b858b4931e9fa6a4c100092ea73" => :mavericks
   end
 
   env :userpaths
@@ -32,8 +32,6 @@ class Boost < Formula
     depends_on "icu4c" => :optional
     depends_on :mpi => [:cc, :cxx, :optional]
   end
-
-  depends_on "bzip2" unless OS.mac?
 
   fails_with :llvm do
     build 2335
@@ -56,11 +54,7 @@ class Boost < Formula
 
     # Force boost to compile with the desired compiler
     open("user-config.jam", "a") do |file|
-      if OS.mac?
-        file.write "using darwin : : #{ENV.cxx} ;\n"
-      else
-        file.write "using gcc : : #{ENV.cxx} ;\n"
-      end
+      file.write "using darwin : : #{ENV.cxx} ;\n"
       file.write "using mpi ;\n" if build.with? "mpi"
     end
 
@@ -88,7 +82,7 @@ class Boost < Formula
 
     # Boost.Log cannot be built using Apple GCC at the moment. Disabled
     # on such systems.
-    without_libraries << "log" if OS.mac? && (ENV.compiler == :gcc || ENV.compiler == :llvm)
+    without_libraries << "log" if ENV.compiler == :gcc || ENV.compiler == :llvm
     without_libraries << "mpi" if build.without? "mpi"
 
     bootstrap_args << "--without-libraries=#{without_libraries.join(",")}"
@@ -124,12 +118,6 @@ class Boost < Formula
         args << "cxxflags=-stdlib=libc++" << "linkflags=-stdlib=libc++"
       end
     end
-
-    # Fix error: bzlib.h: No such file or directory
-    # and /usr/bin/ld: cannot find -lbz2
-    args += [
-      "include=#{HOMEBREW_PREFIX}/include",
-      "linkflags=-L#{HOMEBREW_PREFIX}/lib"] unless OS.mac?
 
     system "./bootstrap.sh", *bootstrap_args
     system "./b2", "headers"
